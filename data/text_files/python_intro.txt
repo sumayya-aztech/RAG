@@ -1,0 +1,28 @@
+
+Python Programming Introduction
+
+Python is a high-level, general-purpose programming language known for its simple and readable syntax.
+
+Key points about Python:
+- Python is easy to learn and beginner-friendly.
+- It is widely used for web development, automation, data analysis, and artificial intelligence.
+- Python supports object-oriented, functional, and procedural programming.
+- Python uses indentation to define blocks of code.
+- Python has a large collection of libraries and frameworks.
+- Popular Python frameworks include Django, Flask, and FastAPI.
+- Python is commonly used in machine learning and data science.
+- Libraries such as NumPy, Pandas, and Matplotlib are widely used for data processing and visualization.
+- Python supports many AI libraries, including PyTorch, TensorFlow, and scikit-learn.
+- Python programs are generally stored in files with the .py extension.
+
+Python Data Types:
+- String: used to store text.
+- Integer: used to store whole numbers.
+- Float: used to store decimal numbers.
+- List: used to store multiple values in an ordered collection.
+- Dictionary: used to store data as key-value pairs.
+- Boolean: represents True or False values.
+
+Python Functions:
+Functions are reusable blocks of code designed to perform a specific task.
+A function can accept inputs called parameters and can return a result.
