@@ -59,8 +59,10 @@ Summary:"""
         for result in results:
             if result["metadata"]:
                 sources.append({
-                    "text": result["metadata"].get("text", ""),
-                    "distance": float(result["distance"])
+                        "text": result["metadata"].get("text", ""),
+                        "source": result["metadata"].get("source", ""),
+                        "page": result["metadata"].get("page", None),
+                        "distance": float(result["distance"])
                 })
 
         return {

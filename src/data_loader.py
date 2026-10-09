@@ -4,6 +4,8 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader, CSVLoa
 from langchain_community.document_loaders import Docx2txtLoader
 from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 from langchain_community.document_loaders import JSONLoader
+import json
+from langchain_core.documents import Document
 
 def load_all_documents(data_dir: str) -> List[Any]:
     """
@@ -55,6 +57,7 @@ def load_all_documents(data_dir: str) -> List[Any]:
             print(f"[ERROR] Failed to load CSV {csv_file}: {e}")
 
     # Excel files
+    # Excel files
     xlsx_files = list(data_path.glob('**/*.xlsx'))
     print(f"[DEBUG] Found {len(xlsx_files)} Excel files: {[str(f) for f in xlsx_files]}")
     for xlsx_file in xlsx_files:
@@ -80,18 +83,45 @@ def load_all_documents(data_dir: str) -> List[Any]:
         except Exception as e:
             print(f"[ERROR] Failed to load Word {docx_file}: {e}")
 
+    
     # JSON files
     json_files = list(data_path.glob('**/*.json'))
     print(f"[DEBUG] Found {len(json_files)} JSON files: {[str(f) for f in json_files]}")
+
     for json_file in json_files:
         print(f"[DEBUG] Loading JSON: {json_file}")
+
         try:
-            loader = JSONLoader(str(json_file))
-            loaded = loader.load()
-            print(f"[DEBUG] Loaded {len(loaded)} JSON docs from {json_file}")
-            documents.extend(loaded)
+            with open(json_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            records = data if isinstance(data, list) else [data]
+
+            for index, record in enumerate(records):
+                if isinstance(record, dict):
+                    content = "\n".join(
+                        f"{key}: {value}"
+                        for key, value in record.items()
+                    )
+                else:
+                    content = str(record)
+
+                doc = Document(
+                    page_content=content,
+                    metadata={
+                        "source": str(json_file),
+                        "record_index": index
+                    }
+                )
+
+                documents.append(doc)
+
+            print(
+                f"[INFO] Loaded {len(records)} JSON records from {json_file}"
+            )
+
         except Exception as e:
-            print(f"[ERROR] Failed to load JSON {json_file}: {e}")
+            print(f"[ERROR] Failed to load JSON {json_file}: {e}") 
 
     print(f"[DEBUG] Total loaded documents: {len(documents)}")
     return documents
