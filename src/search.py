@@ -23,7 +23,7 @@ class RAGSearch:
 
         self.vectorstore.load()
 
-        groq_api_key = "***REMOVED***"
+        groq_api_key = os.getenv("GROQ_API_KEY")
         self.llm = ChatGroq(
             groq_api_key=groq_api_key,
             model_name=llm_model
