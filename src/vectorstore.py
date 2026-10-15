@@ -38,6 +38,66 @@ class FaissVectorStore:
         self.save()
         print(f"[INFO] Vector store built and saved to {self.persist_dir}")
 
+     #when adding single document
+    def add_documents(self, documents: List[Any]):
+        """
+        Add only new documents to the existing FAISS index.
+        Existing vectors and metadata are preserved.
+        """
+        if not documents:
+            raise ValueError("No documents provided.")
+
+        # Load the existing index if it isn't in memory.
+        if self.index is None:
+            self.load()
+
+        print(
+            f"[INFO] Processing {len(documents)} new documents..."
+        )
+
+        # Use the same embedding model and chunk settings
+        # as the existing vector store.
+        emb_pipe = EmbeddingPipeline(
+            model_name=self.embedding_model,
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap
+        )
+
+        # Split only the new documents into chunks.
+        chunks = emb_pipe.chunk_documents(documents)
+
+        if not chunks:
+            raise ValueError(
+                "The uploaded file produced no text chunks."
+            )
+
+        # Generate embeddings only for the new chunks.
+        embeddings = np.asarray(
+            emb_pipe.embed_chunks(chunks),
+            dtype=np.float32
+        )
+
+        # Keep each vector aligned with its metadata.
+        metadatas = [
+            {
+                **chunk.metadata,
+                "text": chunk.page_content,
+                "source": chunk.metadata.get("source", ""),
+                "page": chunk.metadata.get("page")
+            }
+            for chunk in chunks
+        ]
+
+        # Append the new vectors and corresponding metadata.
+        self.add_embeddings(embeddings, metadatas)
+
+        # Persist the updated index and metadata.
+        self.save()
+
+        print(
+            f"[INFO] Successfully added {len(chunks)} new chunks."
+        )    
+
     def add_embeddings(self, embeddings: np.ndarray, metadatas: List[Any] = None):
         dim = embeddings.shape[1]
         if self.index is None:

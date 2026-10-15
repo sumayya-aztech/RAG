@@ -125,3 +125,78 @@ def load_all_documents(data_dir: str) -> List[Any]:
 
     print(f"[DEBUG] Total loaded documents: {len(documents)}")
     return documents
+
+#load single file upload
+    
+def load_single_file(file_path: str) -> List[Any]:
+    """
+    Load only one uploaded file.
+    Supports PDF, TXT, CSV, Excel, Word and JSON.
+    """
+    path = Path(file_path).resolve()
+    extension = path.suffix.lower()
+
+    print(f"[INFO] Loading uploaded file: {path}")
+
+    if extension == ".pdf":
+        documents = PyPDFLoader(str(path)).load()
+
+    elif extension == ".txt":
+        documents = TextLoader(
+            str(path),
+            encoding="utf-8"
+        ).load()
+
+    elif extension == ".csv":
+        documents = CSVLoader(str(path)).load()
+
+    elif extension == ".xlsx":
+        documents = UnstructuredExcelLoader(str(path)).load()
+
+    elif extension == ".docx":
+        documents = Docx2txtLoader(str(path)).load()
+
+    elif extension == ".json":
+        with open(path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        records = data if isinstance(data, list) else [data]
+        documents = []
+
+        for index, record in enumerate(records):
+            if isinstance(record, dict):
+                content = "\n".join(
+                    f"{key}: {value}"
+                    for key, value in record.items()
+                )
+            else:
+                content = str(record)
+
+            documents.append(
+                Document(
+                    page_content=content,
+                    metadata={
+                        "source": str(path),
+                        "record_index": index
+                    }
+                )
+            )
+
+    else:
+        raise ValueError(
+            f"Unsupported file type: {extension}"
+        )
+
+    if not documents or not any(
+        doc.page_content.strip() for doc in documents
+    ):
+        raise ValueError(
+            "The uploaded file contains no readable text."
+        )
+
+    print(
+        f"[INFO] Loaded {len(documents)} documents "
+        f"from {path.name}"
+    )
+
+    return documents
