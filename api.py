@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, HttpUrl
+from typing import Literal
 from src.search import RAGSearch
 from pathlib import Path
-from llm.brochure import create_brochure as generate_brochure
+from llm.brochure import generate_brochure as generate_brochure
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 
@@ -150,18 +151,20 @@ async def upload_document(file: UploadFile = File(...)):
 class BrochureRequest(BaseModel):
     company_name: str
     url: HttpUrl
+    language: Literal["en", "ar"] = "en"
 
 
 @app.post("/brochure")
-def create_brochure(request: BrochureRequest):
+def create_brochure_endpoint(request: BrochureRequest):
     brochure = generate_brochure(
         company_name=request.company_name,
-        url=str(request.url)
+        url=str(request.url),
+        language=request.language,
     )
 
     return {
         "company_name": request.company_name,
         "url": str(request.url),
-        "brochure": brochure
+        "language": request.language,
+        "brochure": brochure,
     }
-

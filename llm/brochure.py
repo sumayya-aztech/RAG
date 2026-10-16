@@ -13,7 +13,7 @@ if api_key and api_key.startswith('sk-proj-') and len(api_key)>10:
 else:
     print("There might be a problem with your API key? Please visit the troubleshooting notebook!")
     
-MODEL = 'gpt-5-nano'
+MODEL = 'gpt-4.1-mini'
 openai = OpenAI()
 
 link_system_prompt = """
@@ -67,44 +67,61 @@ def fetch_page_and_all_relevant_links(url):
             result += fetch_website_contents(link["url"])
         return result
 
+
 brochure_system_prompt = """
-    You are an assistant that analyzes the contents of several relevant pages from a company website
-    and creates a short brochure about the company for prospective customers, investors and recruits.
-    Respond in markdown without code blocks.
-    Include details of company culture, customers and careers/jobs if you have the information.
-    """      
+You analyze relevant pages from a company's website and create
+a short brochure for prospective customers, investors, and recruits.
+
+Write in clear, professional Markdown without code blocks.
+Include company culture, customers, products, services, and careers
+when the information is available.
+Use only facts supported by the website content.
+"""
+
 
 def get_brochure_user_prompt(company_name, url):
-        user_prompt = f"""
-    You are looking at a company called: {company_name}
-    Here are the contents of its landing page and other relevant pages;
-    use this information to build a short brochure of the company in markdown without code blocks.\n\n
-    """
-        user_prompt += fetch_page_and_all_relevant_links(url)
-        user_prompt = user_prompt[:5_000] # Truncate if more than 5,000 characters
-        return user_prompt  
+    website_content = fetch_page_and_all_relevant_links(url)
 
-def stream_brochure(company_name, url):
-    stream = openai.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[
-            {"role": "system", "content": brochure_system_prompt},
-            {"role": "user", "content": get_brochure_user_prompt(company_name, url)}
-          ],
-        stream=True
-    )    
-    response = ""
-    display_handle = display(Markdown(""), display_id=True)
-    for chunk in stream:
-        response += chunk.choices[0].delta.content or ''
-        update_display(Markdown(response), display_id=display_handle.display_id)
+    user_prompt = f"""
+        Company name: {company_name}
 
-def create_brochure(company_name, url):
+        Create a short company brochure using the website content below.
+        Write the brochure in the language requested by the system instructions.
+
+        Website content:
+        {website_content}
+        """
+    return user_prompt[:5000]
+
+
+def generate_brochure(company_name, url, language="en"):
+    if language == "en":
+        system_prompt = brochure_system_prompt
+    elif language == "ar":
+        system_prompt = """
+        You are a professional Arabic company brochure writer.
+
+        Write the entire brochure in fluent, professional Arabic
+        using Markdown.
+        Preserve company names and factual information.
+        Do not invent information.
+        """
+    else:
+        raise ValueError(
+            "Unsupported language. Choose 'en' or 'ar'."
+        )
+
     response = openai.chat.completions.create(
-        model="gpt-4.1-mini",
+        model=MODEL,
         messages=[
-            {"role": "system", "content": brochure_system_prompt},
-            {"role": "user", "content": get_brochure_user_prompt(company_name, url)}
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": get_brochure_user_prompt(
+                    company_name, url
+                ),
+            },
         ],
     )
-    return response.choices[0].message.content or ""     
+
+    return response.choices[0].message.content or ""
