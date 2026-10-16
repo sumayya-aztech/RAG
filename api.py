@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from src.search import RAGSearch
 from pathlib import Path
+from llm.brochure import create_brochure as generate_brochure
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 
@@ -143,3 +144,24 @@ async def upload_document(file: UploadFile = File(...)):
 
     finally:
         await file.close()
+
+
+
+class BrochureRequest(BaseModel):
+    company_name: str
+    url: HttpUrl
+
+
+@app.post("/brochure")
+def create_brochure(request: BrochureRequest):
+    brochure = generate_brochure(
+        company_name=request.company_name,
+        url=str(request.url)
+    )
+
+    return {
+        "company_name": request.company_name,
+        "url": str(request.url),
+        "brochure": brochure
+    }
+
